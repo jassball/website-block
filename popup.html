@@ -4,12 +4,82 @@
     <title>Website Blocker</title>
   </head>
   <body>
-    <h1>Website Blocker</h1>
-    <div>
-      <input id="site-input" type="text" placeholder="Add website" />
-      <button id="add-button">Add</button>
+    <div id="container">
+      <h1>Web Blocker</h1>
+      <div>
+        <p id="subheader">Block Websites</p>
+        <div id="block-container">
+          <input id="site-input" type="text" placeholder="Add website" />
+          <button id="add-button">Block</button>
+        </div>
+      </div>
+      <p id="subheader">Blocked Websites</p>
+      <ul id="blocked-sites"></ul>
     </div>
-    <ul id="blocked-sites"></ul>
     <script src="popup.js"></script>
   </body>
 </html>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 300px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #f4f4f4;
+  }
+
+  #add-button {
+    border-radius: 4px;
+    background-color: red;
+    color: white;
+    border: none;
+    height: 100%;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  #add-button:hover {
+    cursor: pointer;
+    color: white;
+  }
+
+  #site-input {
+    width: 100%;
+    padding: 6px;
+    padding-top: 4px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+  }
+
+  #container {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  }
+
+  #block-container {
+    display: flex;
+    height: 30px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  #subheader {
+    font-size: 16px;
+  }
+
+  #blocked-sites {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+  }
+</style>

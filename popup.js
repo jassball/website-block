@@ -12,7 +12,9 @@ function loadBlockedSites() {
     sites.forEach((site, index) => {
       const li = document.createElement("li");
       li.textContent = site;
-
+      li.style.display = "flex";
+      li.style.justifyContent = "space-between";
+      li.style.marginBottom = "5px";
       // Add a remove button for each site
       const removeButton = document.createElement("button");
       removeButton.textContent = "Remove";
@@ -28,17 +30,25 @@ function loadBlockedSites() {
 // Add a new blocked site
 function addBlockedSite() {
   const site = siteInput.value.trim();
-  if (!site) return;
+  if (!site || !/^([\w-]+\.)+[\w-]+$/.test(site)) {
+    console.error("Invalid website format");
+    return;
+  }
 
   chrome.storage.local.get("blockedSites", (data) => {
     const sites = data.blockedSites || [];
     if (!sites.includes(site)) {
-      sites.push(site); // Add the new site
+      sites.push(site);
+
+      // Save the updated list to storage
       chrome.storage.local.set({ blockedSites: sites }, () => {
+        console.log("Blocked sites updated:", sites);
         siteInput.value = ""; // Clear input field
-        loadBlockedSites(); // Refresh the list
-        addDynamicRule(site); // Add a blocking rule
+        loadBlockedSites(); // Refresh the list in the UI
+        addDynamicRule(site); // Add a dynamic blocking rule
       });
+    } else {
+      console.log(`${site} is already blocked.`);
     }
   });
 }
@@ -47,7 +57,8 @@ function addBlockedSite() {
 function removeBlockedSite(index) {
   chrome.storage.local.get("blockedSites", (data) => {
     const sites = data.blockedSites || [];
-    const [removedSite] = sites.splice(index, 1); // Remove site at index
+    const [removedSite] = sites.splice(index, 1);
+
     chrome.storage.local.set({ blockedSites: sites }, () => {
       loadBlockedSites(); // Refresh the list
       removeDynamicRule(removedSite); // Remove the blocking rule
@@ -57,6 +68,12 @@ function removeBlockedSite(index) {
 
 // Add a dynamic rule for the site
 function addDynamicRule(site) {
+  const urlFilter = site.startsWith("www.")
+    ? `*://${site}/*`
+    : `*://*.${site}/*`;
+
+  console.log(`Adding dynamic rule with urlFilter: ${urlFilter}`);
+
   chrome.declarativeNetRequest.getDynamicRules((rules) => {
     const existingIds = rules.map((rule) => rule.id);
     const newId = existingIds.length ? Math.max(...existingIds) + 1 : 1;
@@ -69,7 +86,7 @@ function addDynamicRule(site) {
             priority: 1,
             action: { type: "block" },
             condition: {
-              urlFilter: `*://*.${site}/*`,
+              urlFilter,
               resourceTypes: ["main_frame"],
             },
           },
@@ -78,9 +95,9 @@ function addDynamicRule(site) {
       },
       () => {
         if (chrome.runtime.lastError) {
-          console.error("Error adding rule:", chrome.runtime.lastError);
+          console.error("Error adding rule:", chrome.runtime.lastError.message);
         } else {
-          console.log(`Blocking rule added for ${site}`);
+          console.log(`Dynamic rule added for ${site}`);
         }
       }
     );
@@ -95,6 +112,11 @@ function removeDynamicRule(site) {
     );
     const ruleIdsToRemove = matchingRules.map((rule) => rule.id);
 
+    if (ruleIdsToRemove.length === 0) {
+      console.warn(`No dynamic rules found for ${site}`);
+      return;
+    }
+
     chrome.declarativeNetRequest.updateDynamicRules(
       {
         addRules: [],
@@ -102,7 +124,10 @@ function removeDynamicRule(site) {
       },
       () => {
         if (chrome.runtime.lastError) {
-          console.error("Error removing rule:", chrome.runtime.lastError);
+          console.error(
+            "Error removing rule:",
+            chrome.runtime.lastError.message
+          );
         } else {
           console.log(`Blocking rule removed for ${site}`);
         }
